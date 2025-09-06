@@ -6,6 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ====== META ======
+const APP_VERSION = 'logs-v3'; // غيّرها كل مرة تعدّل لتتأكد من الديبLOY
+
 // ====== LOGS (in-memory) ======
 const logs = [];
 function logMatch({ from, message, matchedKeyword, reply }) {
@@ -77,8 +80,10 @@ app.post('/logs', (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-// (اختياري) صحّة
+// صحة وخدمة
 app.get('/', (req, res) => res.send('OK: wa-auto-reply-starter'));
+app.get('/__health', (req, res) => res.json({ ok: true }));
+app.get('/__version', (req, res) => res.json({ version: APP_VERSION }));
 
 // ====== Start server ======
 const PORT = process.env.PORT || 3000;
