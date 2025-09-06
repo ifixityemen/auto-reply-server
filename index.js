@@ -1,15 +1,13 @@
 const express = require('express');
+const cors = require('cors');
 const { v4: uuid } = require('uuid');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // ====== LOGS (in-memory) ======
 const logs = [];
-
-/**
- * يسجّل تطبيق قاعدة لرسالة واردة
- */
 function logMatch({ from, message, matchedKeyword, reply }) {
   logs.unshift({
     id: uuid(),
@@ -19,19 +17,17 @@ function logMatch({ from, message, matchedKeyword, reply }) {
     reply: reply || '',
     timestamp: new Date().toISOString(),
   });
-  if (logs.length > 1000) logs.pop(); // احتفظ بآخر 1000
+  if (logs.length > 1000) logs.pop();
 }
 
-// ====== RULES (in-memory كبداية) ======
+// ====== RULES (in-memory example) ======
 let rules = [
-  { id: uuid(), keyword: "مرحبا", reply: "أهلًا وسهلًا بك 👋" },
-  { id: uuid(), keyword: "شكرا", reply: "العفو 🌹" }
+  { id: uuid(), keyword: 'مرحبا', reply: 'أهلًا وسهلًا بك 👋' },
+  { id: uuid(), keyword: 'شكرا',  reply: 'العفو 🌹' }
 ];
 
 // GET /rules
-app.get('/rules', (req, res) => {
-  res.json(rules);
-});
+app.get('/rules', (req, res) => res.json(rules));
 
 // POST /rules
 app.post('/rules', (req, res) => {
@@ -48,22 +44,19 @@ app.post('/rules', (req, res) => {
 app.put('/rules/:id', (req, res) => {
   const { id } = req.params;
   const { keyword, reply } = req.body || {};
-  const r = rules.find(rule => rule.id === id);
+  const r = rules.find(x => x.id === id);
   if (!r) return res.status(404).json({ error: 'rule not found' });
-
   if (keyword) r.keyword = keyword;
-  if (reply) r.reply = reply;
-
+  if (reply)   r.reply   = reply;
   res.json(r);
 });
 
 // DELETE /rules/:id
 app.delete('/rules/:id', (req, res) => {
   const { id } = req.params;
-  const index = rules.findIndex(rule => rule.id === id);
-  if (index === -1) return res.status(404).json({ error: 'rule not found' });
-
-  rules.splice(index, 1);
+  const i = rules.findIndex(x => x.id === id);
+  if (i === -1) return res.status(404).json({ error: 'rule not found' });
+  rules.splice(i, 1);
   res.json({ success: true });
 });
 
@@ -74,7 +67,7 @@ app.get('/logs', (req, res) => {
   res.json(logs.slice(0, limit));
 });
 
-// POST /logs (للاختبار اليدوي)
+// POST /logs (اختبار يدوي)
 app.post('/logs', (req, res) => {
   const { from, message, matchedKeyword, reply } = req.body || {};
   if (!message || !reply) {
@@ -84,8 +77,9 @@ app.post('/logs', (req, res) => {
   res.status(201).json({ ok: true });
 });
 
+// (اختياري) صحّة
+app.get('/', (req, res) => res.send('OK: wa-auto-reply-starter'));
+
 // ====== Start server ======
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('Server started on port ' + PORT);
-});
+app.listen(PORT, () => console.log('Server started on port ' + PORT));
