@@ -6,8 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ====== META ======
-const APP_VERSION = 'logs-v3'; // غيّرها كل مرة تعدّل لتتأكد من الديبLOY
+const APP_VERSION = 'logs-check-v1';
 
 // ====== LOGS (in-memory) ======
 const logs = [];
@@ -35,9 +34,7 @@ app.get('/rules', (req, res) => res.json(rules));
 // POST /rules
 app.post('/rules', (req, res) => {
   const { keyword, reply } = req.body || {};
-  if (!keyword || !reply) {
-    return res.status(400).json({ error: 'keyword and reply are required' });
-  }
+  if (!keyword || !reply) return res.status(400).json({ error: 'keyword and reply are required' });
   const rule = { id: uuid(), keyword, reply };
   rules.push(rule);
   res.status(201).json(rule);
@@ -64,27 +61,22 @@ app.delete('/rules/:id', (req, res) => {
 });
 
 // ====== LOGS endpoints ======
-// GET /logs
 app.get('/logs', (req, res) => {
   const limit = Math.min(parseInt(req.query.limit || '100', 10), 1000);
   res.json(logs.slice(0, limit));
 });
 
-// POST /logs (اختبار يدوي)
 app.post('/logs', (req, res) => {
   const { from, message, matchedKeyword, reply } = req.body || {};
-  if (!message || !reply) {
-    return res.status(400).json({ error: 'message and reply are required' });
-  }
+  if (!message || !reply) return res.status(400).json({ error: 'message and reply are required' });
   logMatch({ from, message, matchedKeyword, reply });
   res.status(201).json({ ok: true });
 });
 
-// صحة وخدمة
+// Health & Version
 app.get('/', (req, res) => res.send('OK: wa-auto-reply-starter'));
 app.get('/__health', (req, res) => res.json({ ok: true }));
 app.get('/__version', (req, res) => res.json({ version: APP_VERSION }));
 
-// ====== Start server ======
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Server started on port ' + PORT));
